@@ -8,7 +8,10 @@ class FirestoreService {
 
   Future<List<Cake>> getCakes() async {
     QuerySnapshot snapshot = await _db.collection('cakes').get();
-    return snapshot.docs.map((doc) => Cake.fromMap(doc.data() as Map<String, dynamic>, doc.id)).toList();
+    return snapshot.docs.map((doc) {
+      final data = doc.data() as Map<String, dynamic>;
+      return Cake.fromMap(data, doc.id);
+    }).toList();
   }
 
   Future<void> addToCart(String userId, String cakeId, int quantity) async {

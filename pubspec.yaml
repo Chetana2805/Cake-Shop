@@ -25,5 +25,11 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
+<<<<<<< HEAD
     - .env
     - assets/bakery_bg.jpg
+=======
+    - .env 
+    - assets/images/cake-1.jpg
+    - assets/images/cake-2.webp
+>>>>>>> cc588045c0cdbf3d51055ef72b6c1583643980b4
