@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "67673227637",
+    "project_id": "cake-shop-app-9b59c",
+    "storage_bucket": "cake-shop-app-9b59c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:67673227637:android:7ccd7f44a6069506e1533c",
+        "android_client_info": {
+          "package_name": "com.example.cake_shop_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBqi9fd19QnrHgeBYwu71x7qXZCwTYs78I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
