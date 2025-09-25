@@ -26,5 +26,6 @@ flutter:
   uses-material-design: true
   assets:
     - .env 
-    - assets/images/cake-1.jpg
+    - assets/images/cake-1.webp
     - assets/images/cake-2.webp
+    - assets/images/placeholder.jpg
