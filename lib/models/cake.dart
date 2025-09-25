@@ -1,4 +1,3 @@
-// lib/models/cake.dart
 class Cake {
   final String id;
   final String name;

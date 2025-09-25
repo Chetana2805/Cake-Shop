@@ -25,4 +25,8 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - .env  # Loads .env from project root; or use - assets/.env if in assets/ folder
+    - .env
+    - assets/bakery_bg.jpg
+    - assets/images/cake-1.webp
+    - assets/images/cake-2.webp
+    - assets/images/placeholder.jpg

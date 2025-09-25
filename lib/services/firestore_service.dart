@@ -8,7 +8,10 @@ class FirestoreService {
 
   Future<List<Cake>> getCakes() async {
     QuerySnapshot snapshot = await _db.collection('cakes').get();
-    return snapshot.docs.map((doc) => Cake.fromMap(doc.data() as Map<String, dynamic>, doc.id)).toList();
+    return snapshot.docs.map((doc) {
+      final data = doc.data() as Map<String, dynamic>;
+      return Cake.fromMap(data, doc.id);
+    }).toList();
   }
 
   Future<void> addToCart(String userId, String cakeId, int quantity) async {
@@ -31,6 +34,20 @@ class FirestoreService {
       await doc.reference.delete();
     }
   }
+
+  Future<void> updateCartQuantity(String userId, String cakeId, int quantity) async {
+  final cartRef = FirebaseFirestore.instance
+      .collection('users')
+      .doc(userId)
+      .collection('carts')
+      .doc(cakeId); 
+
+  await cartRef.update({
+    'quantity': quantity,
+    'updatedAt': FieldValue.serverTimestamp(),
+  });
+}
+
 
   Future<void> placeOrder(String userId, List<CartItem> items, double total) async {
     List<Map<String, dynamic>> orderItems = items.map((item) => item.toMap()).toList();
