@@ -41,6 +41,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Cake Shop',
       theme: ThemeData(primarySwatch: Colors.blue),
+      debugShowCheckedModeBanner: false,
       initialRoute: '/auth',
       routes: {
         '/auth': (context) => const AuthScreen(),
