@@ -102,7 +102,7 @@ class _CakeCardState extends State<CakeCard> with SingleTickerProviderStateMixin
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          '\$${widget.cake.price.toStringAsFixed(2)}',
+                          '₹${widget.cake.price.toStringAsFixed(2)}',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
