@@ -4,7 +4,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import '../models/cake.dart';
 import '../models/cart_item.dart';
 import '../services/firestore_service.dart';
-import 'checkout_screen.dart';
+
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -79,89 +79,88 @@ class _CartScreenState extends State<CartScreen> {
         backgroundColor: Colors.pinkAccent,
       ),
       body: _isLoading
-    ? const Center(child: CircularProgressIndicator())
-    : Stack(
-        children: [
-          // Background image
-          Container(
-          decoration: const BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage('assets/images/placeholder.jpg'), // your image path
-              fit: BoxFit.cover,
-            ),
-          ),
-          child: Container(
-            color: Colors.black.withOpacity(0.5), // Black overlay with 50% opacity
-          ),
-        ),
-
-          // Cart content with transparency
-          _cartItems.isEmpty
-              ? const Center(
-                  child: Text(
-                    'Your cart is empty',
-                    style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.white, // text color for better contrast
-                        fontWeight: FontWeight.bold),
+          ? const Center(child: CircularProgressIndicator())
+          : Stack(
+              children: [
+                Container(
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/placeholder.jpg'),
+                      fit: BoxFit.cover,
+                    ),
                   ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: _cartItems.length,
-                  itemBuilder: (_, index) {
-                    final item = _cartItems[index];
-                    final cake = _cakesMap[item.cakeId];
-                    return Card(
-                      color: Colors.white.withOpacity(0.8), // make cards slightly transparent
-                      elevation: 4,
-                      margin: const EdgeInsets.symmetric(vertical: 6),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: ListTile(
-                        leading: cake != null
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.asset(
-                                  cake.imageUrl,
-                                  width: 60,
-                                  height: 60,
-                                  fit: BoxFit.cover,
-                                ),
-                              )
-                            : const Icon(Icons.cake, size: 50),
-                        title: Text(cake?.name ?? 'Unknown Cake'),
-                        subtitle: Text(
-                            'Price: ₹${cake?.price.toStringAsFixed(2) ?? '0.00'}'),
-                        trailing: SizedBox(
-                          width: 120,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.remove_circle_outline,
-                                    color: Colors.pinkAccent),
-                                onPressed: () => _updateQuantity(item, -1),
-                              ),
-                              Text(
-                                '${item.quantity}',
-                                style: const TextStyle(fontSize: 16),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.add_circle_outline,
-                                    color: Colors.pinkAccent),
-                                onPressed: () => _updateQuantity(item, 1),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
+                  child: Container(
+                    color: Colors.black.withOpacity(0.5),
+                  ),
                 ),
-        ],
-      ),
+                _cartItems.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'Your cart is empty',
+                          style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(12),
+                        itemCount: _cartItems.length,
+                        itemBuilder: (_, index) {
+                          final item = _cartItems[index];
+                          final cake = _cakesMap[item.cakeId];
+                          return Card(
+                            color: Colors.white.withOpacity(0.8),
+                            elevation: 4,
+                            margin: const EdgeInsets.symmetric(vertical: 6),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ListTile(
+                              leading: cake != null
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.asset(
+                                        cake.imageUrl,
+                                        width: 60,
+                                        height: 60,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                  : const Icon(Icons.cake, size: 50),
+                              title: Text(cake?.name ?? 'Unknown Cake'),
+                              subtitle: Text(
+                                  'Price: ₹${cake?.price.toStringAsFixed(2) ?? '0.00'}'),
+                              trailing: SizedBox(
+                                width: 120,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(
+                                          Icons.remove_circle_outline,
+                                          color: Colors.pinkAccent),
+                                      onPressed: () => _updateQuantity(item, -1),
+                                    ),
+                                    Text(
+                                      '${item.quantity}',
+                                      style: const TextStyle(fontSize: 16),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                          Icons.add_circle_outline,
+                                          color: Colors.pinkAccent),
+                                      onPressed: () => _updateQuantity(item, 1),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ],
+            ),
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -195,13 +194,10 @@ class _CartScreenState extends State<CartScreen> {
               ),
               onPressed: _cartItems.isEmpty
                   ? null
-                  : () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              CheckoutScreen(total: _total, items: _cartItems),
-                        ),
-                      ),
+                  : () => Navigator.pushNamed(context, '/checkout', arguments: {
+                        'items': _cartItems,
+                        'cakesMap': _cakesMap,
+                      }),
               child: const Text(
                 'Checkout',
                 style: TextStyle(fontSize: 16, color: Colors.white),
