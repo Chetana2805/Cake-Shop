@@ -4,7 +4,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import '../models/cake.dart';
 import '../models/cart_item.dart';
 import '../services/firestore_service.dart';
-import 'checkout_screen.dart';
+
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -31,9 +31,7 @@ class _CartScreenState extends State<CartScreen> {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
         Fluttertoast.showToast(msg: 'Please log in to view cart');
-        if (mounted) {
-          Navigator.pushReplacementNamed(context, '/auth');
-        }
+        if (mounted) Navigator.pushReplacementNamed(context, '/auth');
         return;
       }
 
@@ -45,9 +43,7 @@ class _CartScreenState extends State<CartScreen> {
     } catch (e) {
       Fluttertoast.showToast(msg: 'Error loading cart: $e');
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -55,53 +51,147 @@ class _CartScreenState extends State<CartScreen> {
     _total = 0.0;
     for (var item in _cartItems) {
       final cake = _cakesMap[item.cakeId];
-      if (cake != null) {
-        _total += cake.price * item.quantity;
+      if (cake != null) _total += cake.price * item.quantity;
+    }
+  }
+
+  Future<void> _updateQuantity(CartItem item, int change) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    try {
+      final newQty = item.quantity + change;
+      if (newQty < 1) {
+        await FirestoreService().removeFromCart(user.uid, item.cakeId);
+      } else {
+        await FirestoreService().updateCartQuantity(user.uid, item.cakeId, newQty);
       }
+      _loadCart();
+    } catch (e) {
+      Fluttertoast.showToast(msg: 'Error updating quantity: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Cart')),
+      appBar: AppBar(
+        title: const Text('Your Cart'),
+        backgroundColor: Colors.pinkAccent,
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _cartItems.isEmpty
-              ? const Center(child: Text('Your cart is empty'))
-              : ListView.builder(
-                  itemCount: _cartItems.length,
-                  itemBuilder: (_, index) {
-                    final item = _cartItems[index];
-                    final cake = _cakesMap[item.cakeId];
-                    return ListTile(
-                      title: Text(cake?.name ?? 'Unknown Cake'),
-                      subtitle: Text(
-                          'Qty: ${item.quantity} | Price: \$${cake?.price.toStringAsFixed(2) ?? '0.00'}'),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.remove),
-                        onPressed: () async {
-                          final user = FirebaseAuth.instance.currentUser;
-                          if (user == null) return;
-                          try {
-                            await FirestoreService().removeFromCart(user.uid, item.cakeId);
-                            Fluttertoast.showToast(msg: 'Item removed from cart');
-                            _loadCart();
-                          } catch (e) {
-                            Fluttertoast.showToast(msg: 'Error removing item: $e');
-                          }
+          : Stack(
+              children: [
+                Container(
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/placeholder.jpg'),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  child: Container(
+                    color: Colors.black.withOpacity(0.5),
+                  ),
+                ),
+                _cartItems.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'Your cart is empty',
+                          style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(12),
+                        itemCount: _cartItems.length,
+                        itemBuilder: (_, index) {
+                          final item = _cartItems[index];
+                          final cake = _cakesMap[item.cakeId];
+                          return Card(
+                            color: Colors.white.withOpacity(0.8),
+                            elevation: 4,
+                            margin: const EdgeInsets.symmetric(vertical: 6),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ListTile(
+                              leading: cake != null
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.asset(
+                                        cake.imageUrl,
+                                        width: 60,
+                                        height: 60,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                  : const Icon(Icons.cake, size: 50),
+                              title: Text(cake?.name ?? 'Unknown Cake'),
+                              subtitle: Text(
+                                  'Price: ₹${cake?.price.toStringAsFixed(2) ?? '0.00'}'),
+                              trailing: SizedBox(
+                                width: 120,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(
+                                          Icons.remove_circle_outline,
+                                          color: Colors.pinkAccent),
+                                      onPressed: () => _updateQuantity(item, -1),
+                                    ),
+                                    Text(
+                                      '${item.quantity}',
+                                      style: const TextStyle(fontSize: 16),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                          Icons.add_circle_outline,
+                                          color: Colors.pinkAccent),
+                                      onPressed: () => _updateQuantity(item, 1),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
                         },
                       ),
-                    );
-                  },
-                ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(8.0),
+              ],
+            ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.shade400,
+              blurRadius: 8,
+              offset: const Offset(0, -2),
+            )
+          ],
+        ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Total: \$${_total.toStringAsFixed(2)}'),
+            Text(
+              'Total: ₹${_total.toStringAsFixed(2)}',
+              style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.pinkAccent),
+            ),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.pinkAccent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
               onPressed: _cartItems.isEmpty
                   ? null
                   : () => Navigator.push(

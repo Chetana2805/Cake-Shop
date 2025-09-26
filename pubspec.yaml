@@ -17,6 +17,7 @@ dependencies:
   fluttertoast: ^8.2.2
   flutter_dotenv: ^5.1.0
   intl_phone_field: ^3.1.0
+  intl_phone_field: ^3.1.0
 
 dev_dependencies:
   flutter_test:
@@ -31,3 +32,11 @@ flutter:
     - assets/images/cake-1.webp
     - assets/images/cake-2.webp
     - assets/images/placeholder.jpg
+    - assets/images/placeholder-2.png
+    - assets/images/chocolate_cake.jpg
+    - assets/images/vanilla_cake.webp
+    - assets/images/rasmalai_cake.jpg
+    - assets/images/redvelvet_cake.jpg
+    - assets/images/black_forest_cake.jpg
+
+    
