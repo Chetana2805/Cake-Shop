@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
-
+import 'package:fluttertoast/fluttertoast.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -21,19 +21,22 @@ class _AuthScreenState extends State<AuthScreen> {
 
   bool _isLogin = true;
   bool _isLoading = false;
-  String? _errorMessage;
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // Extra phone number check for Sign-Up
+    if (!_isLogin && (_phoneNumber == null || _phoneNumber!.isEmpty)) {
+      Fluttertoast.showToast(msg: 'Phone number is required');
+      return;
+    }
+
     setState(() {
       _isLoading = true;
-      _errorMessage = null;
     });
 
     try {
       User? user;
-
       if (_isLogin) {
         // Login
         user = (await FirebaseAuth.instance.signInWithEmailAndPassword(
@@ -50,10 +53,7 @@ class _AuthScreenState extends State<AuthScreen> {
             .user;
 
         if (user != null) {
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(user.uid)
-              .set({
+          await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
             'fullName': _nameController.text.trim(),
             'phone': _phoneNumber,
             'email': _emailController.text.trim(),
@@ -66,35 +66,29 @@ class _AuthScreenState extends State<AuthScreen> {
         Navigator.pushReplacementNamed(context, '/home');
       }
     } on FirebaseAuthException catch (e) {
-      setState(() {
-        switch (e.code) {
-          case 'email-already-in-use':
-            _errorMessage = 'Email is already registered.';
-            break;
-          case 'weak-password':
-            _errorMessage = 'Password is too weak.';
-            break;
-          case 'invalid-email':
-            _errorMessage = 'Invalid email address.';
-            break;
-          case 'user-not-found':
-            _errorMessage = 'No account found with this email.';
-            break;
-          case 'wrong-password':
-            _errorMessage = 'Incorrect password.';
-            break;
-          default:
-            _errorMessage = 'Authentication failed. Try again.';
-        }
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(_errorMessage!)),
-        );
+      String message;
+      switch (e.code) {
+        case 'email-already-in-use':
+          message = 'Email is already registered.';
+          break;
+        case 'weak-password':
+          message = 'Password is too weak.';
+          break;
+        case 'invalid-email':
+          message = 'Invalid email address.';
+          break;
+        case 'user-not-found':
+          message = 'No account found with this email.';
+          break;
+        case 'wrong-password':
+          message = 'Incorrect password.';
+          break;
+        default:
+          message = 'Authentication failed. Try again.';
       }
+      Fluttertoast.showToast(msg: message);
     } catch (e) {
-      setState(() => _errorMessage = 'Something went wrong: $e');
+      Fluttertoast.showToast(msg: 'Something went wrong: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -115,40 +109,28 @@ class _AuthScreenState extends State<AuthScreen> {
         children: [
           // Background
           Container(
-            width: double.infinity,
-            height: double.infinity,
             decoration: const BoxDecoration(
               image: DecorationImage(
                 image: AssetImage('assets/bakery_bg.jpg'),
                 fit: BoxFit.cover,
-                alignment: Alignment.center,
               ),
             ),
             child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.black.withOpacity(0.6),
-                    Colors.black.withOpacity(0.2),
-                  ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
+              color: Colors.black.withOpacity(0.5),
             ),
           ),
 
-          // Auth Card
+          // Auth Form
           Center(
             child: SingleChildScrollView(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 400),
                 child: Card(
                   color: Colors.white.withOpacity(0.9),
-                  elevation: 10,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
+                  elevation: 8,
                   child: Padding(
                     padding: const EdgeInsets.all(24),
                     child: Form(
@@ -157,34 +139,25 @@ class _AuthScreenState extends State<AuthScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            _isLogin ? 'Login' : 'Create Account',
+                            _isLogin ? 'Login' : 'Sign Up',
                             style: const TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black87,
                             ),
                           ),
                           const SizedBox(height: 24),
 
-                          // Full Name
+                          // Name field (Sign-Up only)
                           if (!_isLogin)
                             TextFormField(
                               controller: _nameController,
                               decoration: const InputDecoration(
                                 labelText: 'Full Name',
                                 prefixIcon: Icon(Icons.person),
-                                counterText: '',
                               ),
-                              maxLength: 50,
                               validator: (value) {
-                                if (!_isLogin &&
-                                    (value == null || value.trim().isEmpty)) {
-                                  return 'Please enter your full name';
-                                }
-                                final nameRegex =
-                                    RegExp(r"^[a-zA-ZÀ-ÿ ,.'-]+$");
-                                if (!nameRegex.hasMatch(value!)) {
-                                  return 'Invalid characters in name';
+                                if (!_isLogin && (value == null || value.trim().isEmpty)) {
+                                  return 'Enter your full name';
                                 }
                                 return null;
                               },
@@ -201,12 +174,11 @@ class _AuthScreenState extends State<AuthScreen> {
                             keyboardType: TextInputType.emailAddress,
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
-                                return 'Please enter your email';
+                                return 'Enter email';
                               }
-                              final emailRegex =
-                                  RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,}$');
-                              if (!emailRegex.hasMatch(value.trim())) {
-                                return 'Enter a valid email';
+                              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,}$')
+                                  .hasMatch(value.trim())) {
+                                return 'Enter valid email';
                               }
                               return null;
                             },
@@ -223,57 +195,38 @@ class _AuthScreenState extends State<AuthScreen> {
                             obscureText: true,
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
-                                return 'Please enter password';
+                                return 'Enter password';
                               }
                               if (value.trim().length < 8) {
-                                return 'Min 8 characters required';
-                              }
-                              final passRegex = RegExp(
-                                  r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$');
-                              if (!passRegex.hasMatch(value.trim())) {
-                                return 'Must include upper, lower, number & special char';
+                                return 'Min 8 characters';
                               }
                               return null;
                             },
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 16),
 
-                          // Phone Number (India only) - Only for Sign-Up
+                          // Phone (Sign-Up only)
                           if (!_isLogin)
                             IntlPhoneField(
                               decoration: const InputDecoration(
                                 labelText: 'Phone Number',
                                 border: OutlineInputBorder(),
                               ),
-                              initialCountryCode: 'IN', // Default India
+                              initialCountryCode: 'IN',
                               onChanged: (phone) {
                                 _phoneNumber = phone.completeNumber;
                               },
                               validator: (value) {
                                 if (value == null || value.number.isEmpty) {
-                                  return 'Enter your phone number';
+                                  return 'Enter phone number';
                                 }
                                 if (value.number.length != 10) {
-                                  return 'Enter a valid 10-digit Indian number';
+                                  return 'Enter valid 10-digit number';
                                 }
                                 return null;
                               },
                             ),
-
                           if (!_isLogin) const SizedBox(height: 24),
-
-                          // Error Message
-                          if (_errorMessage != null)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: Text(
-                                _errorMessage!,
-                                style: const TextStyle(
-                                  color: Colors.red,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
 
                           // Submit Button
                           SizedBox(
@@ -282,38 +235,26 @@ class _AuthScreenState extends State<AuthScreen> {
                               onPressed: _isLoading ? null : _submit,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.pink,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 16),
+                                padding: const EdgeInsets.symmetric(vertical: 16),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
                               child: _isLoading
-                                  ? const SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2,
-                                      ),
+                                  ? const CircularProgressIndicator(
+                                      color: Colors.white,
                                     )
-                                  : Text(
-                                      _isLogin ? 'Login' : 'Sign Up',
-                                      style: const TextStyle(fontSize: 18),
-                                    ),
+                                  : Text(_isLogin ? 'Login' : 'Sign Up'),
                             ),
                           ),
 
-                          // Switch Mode
                           const SizedBox(height: 12),
                           TextButton(
-                            onPressed: () =>
-                                setState(() => _isLogin = !_isLogin),
+                            onPressed: () => setState(() => _isLogin = !_isLogin),
                             child: Text(
                               _isLogin
                                   ? 'Create Account'
                                   : 'Already have an account? Login',
-                              style: const TextStyle(color: Colors.black87),
                             ),
                           ),
                         ],
