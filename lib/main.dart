@@ -5,10 +5,7 @@ import 'firebase_options.dart';
 import 'screens/auth_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/cart_screen.dart';
-import 'screens/checkout_screen.dart';
-import '../models/cake.dart';
-import '../models/cart_item.dart';
-
+import 'screens/profile_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -16,24 +13,28 @@ Future<void> main() async {
   try {
     await dotenv.load(fileName: '.env');
   } catch (e) {
-    print('Error loading .env file: $e');
     runApp(const ErrorApp(message: 'Failed to load configuration'));
     return;
   }
 
-  // Initialize Firebase
+  // Initialize Firebase once
   try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-  } catch (e) {
-    print('Error initializing Firebase: $e');
-    runApp(const ErrorApp(message: 'Failed to initialize Firebase'));
-    return;
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+} catch (e) {
+  if (e.toString().contains('duplicate-app')) {
+    print('Firebase already initialized, ignoring');
+  } else {
+    rethrow;
   }
+}
+
+
 
   runApp(const MyApp());
 }
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -49,6 +50,7 @@ class MyApp extends StatelessWidget {
         '/auth': (context) => const AuthScreen(),
         '/home': (context) => HomeScreen(),
         '/cart': (context) => const CartScreen(),
+        '/profile': (context) => const ProfileScreen(),
       },
     );
   }
