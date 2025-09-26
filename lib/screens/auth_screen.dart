@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
-import 'package:intl_phone_field/countries.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -25,6 +24,14 @@ class _AuthScreenState extends State<AuthScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+
+    // Extra phone number check for Sign-Up mode
+    if (!_isLogin && (_phoneNumber == null || _phoneNumber!.isEmpty)) {
+      setState(() {
+        _errorMessage = 'Phone number is required';
+      });
+      return;
+    }
 
     setState(() {
       _isLoading = true;
@@ -245,16 +252,16 @@ class _AuthScreenState extends State<AuthScreen> {
                                 labelText: 'Phone Number',
                                 border: OutlineInputBorder(),
                               ),
-                              initialCountryCode: 'IN', // Default India
+                              initialCountryCode: 'IN',
                               onChanged: (phone) {
                                 _phoneNumber = phone.completeNumber;
                               },
                               validator: (value) {
                                 if (value == null || value.number.isEmpty) {
-                                  return 'Enter your phone number';
+                                  return 'Phone number is required'; // <-- Error will appear below the field
                                 }
                                 if (value.number.length != 10) {
-                                  return 'Enter a valid 10-digit Indian number';
+                                  return 'Enter a valid 10-digit number';
                                 }
                                 return null;
                               },
