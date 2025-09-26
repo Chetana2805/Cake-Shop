@@ -50,18 +50,6 @@ class MyApp extends StatelessWidget {
         '/home': (context) => HomeScreen(),
         '/cart': (context) => const CartScreen(),
       },
-      onGenerateRoute: (settings) {
-        if (settings.name == '/checkout') {
-          final args = settings.arguments as Map<String, dynamic>;
-          return MaterialPageRoute(
-            builder: (_) => CheckoutScreen(
-              items: args['items'] as List<CartItem>,
-              cakesMap: args['cakesMap'] as Map<String, Cake>,
-            ),
-          );
-        }
-        return null;
-      },
     );
   }
 }

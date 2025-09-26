@@ -194,14 +194,13 @@ class _CartScreenState extends State<CartScreen> {
               ),
               onPressed: _cartItems.isEmpty
                   ? null
-                  : () => Navigator.pushNamed(context, '/checkout', arguments: {
-                        'items': _cartItems,
-                        'cakesMap': _cakesMap,
-                      }),
-              child: const Text(
-                'Checkout',
-                style: TextStyle(fontSize: 16, color: Colors.white),
-              ),
+                  : () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => CheckoutScreen(items: _cartItems, cakesMap: _cakesMap),
+                        ),
+                      ),
+              child: const Text('Checkout'),
             ),
           ],
         ),

@@ -43,6 +43,7 @@ class CheckoutScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Checkout'),
         backgroundColor: Colors.pinkAccent,
+        elevation: 0,
       ),
       body: Container(
         color: Colors.grey[100],
@@ -64,7 +65,7 @@ class CheckoutScreen extends StatelessWidget {
                       leading: cake?.imageUrl != null
                           ? ClipRRect(
                               borderRadius: BorderRadius.circular(8),
-                              child: Image.asset(
+                              child: Image.network(
                                 cake!.imageUrl,
                                 width: 60,
                                 height: 60,

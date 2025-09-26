@@ -1,3 +1,4 @@
+// lib/screens/home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/cake.dart';
@@ -80,21 +81,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _logout() async {
-    try {
-      await FirebaseAuth.instance.signOut();
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/auth');
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error logging out: $e')),
-        );
-      }
-    }
-  }
-
   @override
   void dispose() {
     _searchController.removeListener(_filterCakes);
@@ -158,11 +144,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
             ],
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
-            onPressed: _logout,
-            tooltip: 'Logout',
           ),
           const SizedBox(width: 16),
         ],
