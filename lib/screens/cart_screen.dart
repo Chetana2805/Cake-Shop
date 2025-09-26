@@ -107,7 +107,7 @@ class _CartScreenState extends State<CartScreen> {
                   : () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => CheckoutScreen(total: _total, items: _cartItems),
+                          builder: (_) => CheckoutScreen(items: _cartItems, cakesMap: _cakesMap),
                         ),
                       ),
               child: const Text('Checkout'),

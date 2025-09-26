@@ -47,7 +47,6 @@ class MyApp extends StatelessWidget {
         '/auth': (context) => const AuthScreen(),
         '/home': (context) =>  HomeScreen(),
         '/cart': (context) => const CartScreen(),
-        '/checkout': (context) =>  CheckoutScreen(total: 0.0, items: []),
       },
     );
   }
