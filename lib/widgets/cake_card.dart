@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../models/cake.dart';
 import '../services/firestore_service.dart';
+import '../screens/cake_details_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
@@ -44,6 +45,16 @@ class _CakeCardState extends State<CakeCard> with SingleTickerProviderStateMixin
       onTapDown: (_) => _controller.forward(),
       onTapUp: (_) => _controller.reverse(),
       onTapCancel: () => _controller.reverse(),
+
+       onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CakeDetailsScreen(cake: widget.cake),
+        ),
+      );
+    },
+    
       child: ScaleTransition(
         scale: _scaleAnimation,
         child: Card(
@@ -58,7 +69,7 @@ class _CakeCardState extends State<CakeCard> with SingleTickerProviderStateMixin
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
                 child: widget.cake.imageUrl.isNotEmpty
                     ? FadeInImage(
-                        placeholder: const AssetImage('assets/images/placeholder.png'),
+                        placeholder: const AssetImage('assets/images/placeholder-2.png'),
                         image: AssetImage(widget.cake.imageUrl),
                         height: 120, // reduced for responsiveness
                         width: double.infinity,
@@ -131,8 +142,15 @@ class _CakeCardState extends State<CakeCard> with SingleTickerProviderStateMixin
                                 }
                                 try {
                                   await FirestoreService().addToCart(user.uid, widget.cake.id, 1);
-                                  Fluttertoast.showToast(msg: '${widget.cake.name} added to cart');
-                                  widget.onCartUpdated?.call();
+                                  Fluttertoast.showToast(
+                                  msg: '${widget.cake.name} added to cart',
+                                  toastLength: Toast.LENGTH_SHORT,
+                                  gravity: ToastGravity.BOTTOM,
+                                  backgroundColor: Colors.black, // black background
+                                  textColor: Colors.white,       // white text
+                                  fontSize: 14.0,
+                                );
+
                                 } catch (e) {
                                   Fluttertoast.showToast(msg: 'Error adding to cart: $e');
                                 } finally {
