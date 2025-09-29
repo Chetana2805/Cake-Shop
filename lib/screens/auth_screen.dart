@@ -218,10 +218,11 @@ class _AuthScreenState extends State<AuthScreen> {
                               },
                               validator: (value) {
                                 if (value == null || value.number.isEmpty) {
+                                  return 'Phone number is required'; // <-- Error will appear below the field
                                   return 'Enter phone number';
                                 }
                                 if (value.number.length != 10) {
-                                  return 'Enter valid 10-digit number';
+                                  return 'Enter a valid 10-digit number';
                                 }
                                 return null;
                               },
