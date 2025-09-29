@@ -5,20 +5,30 @@ import '../models/cake.dart';
 import '../services/firestore_service.dart';
 import '../widgets/cake_card.dart';
 
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
 
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
+
 class _HomeScreenState extends State<HomeScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   final TextEditingController _searchController = TextEditingController();
+
+
   List<Cake> _cakes = [];
   List<Cake> _filteredCakes = [];
   bool _isLoading = false;
-  int _cartItemCount = 0; // Track cart item count
+  int _cartItemCount = 0;
+
+
+  List<String> _allIngredients = [];
+  List<String> _selectedIngredients = [];
+
 
   @override
   void initState() {
@@ -28,15 +38,24 @@ class _HomeScreenState extends State<HomeScreen> {
     _searchController.addListener(_filterCakes);
   }
 
+
   Future<void> _loadCakes() async {
     if (_isLoading) return;
     _isLoading = true;
     try {
       final cakes = await _firestoreService.getCakes();
       if (mounted) {
+        // Collect unique ingredients
+        final ingredientsSet = <String>{};
+        for (var cake in cakes) {
+          ingredientsSet.addAll(cake.ingredients);
+        }
+
+
         setState(() {
           _cakes = cakes;
           _filteredCakes = cakes;
+          _allIngredients = ingredientsSet.toList()..sort();
         });
       }
     } catch (e) {
@@ -49,6 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _isLoading = false;
     }
   }
+
 
   Future<void> _loadCartCount() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -64,22 +84,30 @@ class _HomeScreenState extends State<HomeScreen> {
         print('Error loading cart count: $e');
       }
     } else {
-      if (mounted) {
-        setState(() => _cartItemCount = 0);
-      }
+      if (mounted) setState(() => _cartItemCount = 0);
     }
   }
 
+
   void _filterCakes() {
     final query = _searchController.text.toLowerCase();
-    if (mounted) {
-      setState(() {
-        _filteredCakes = _cakes.where((cake) =>
-            cake.name.toLowerCase().contains(query) ||
-            cake.description.toLowerCase().contains(query)).toList();
-      });
-    }
+    setState(() {
+      _filteredCakes = _cakes.where((cake) {
+        final matchesSearch = cake.name.toLowerCase().contains(query) ||
+            cake.description.toLowerCase().contains(query);
+
+
+        final matchesIngredient = _selectedIngredients.isEmpty
+            ? true
+            : cake.ingredients
+                .any((ing) => _selectedIngredients.contains(ing));
+
+
+        return matchesSearch && matchesIngredient;
+      }).toList();
+    });
   }
+
 
   @override
   void dispose() {
@@ -87,6 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _searchController.dispose();
     super.dispose();
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -152,6 +181,35 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            // Ingredient filter chips
+            if (_allIngredients.isNotEmpty)
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: _allIngredients.map((ingredient) {
+                    final isSelected = _selectedIngredients.contains(ingredient);
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      child: ChoiceChip(
+                        label: Text(ingredient),
+                        selected: isSelected,
+                        onSelected: (selected) {
+                          setState(() {
+                            if (selected) {
+                              _selectedIngredients.add(ingredient);
+                            } else {
+                              _selectedIngredients.remove(ingredient);
+                            }
+                            _filterCakes();
+                          });
+                        },
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            const SizedBox(height: 12),
+            // Search bar
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -181,6 +239,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(height: 16),
+            // Cake grid
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
@@ -198,7 +257,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           itemBuilder: (context, index) {
                             return CakeCard(
                               cake: _filteredCakes[index],
-                              onCartUpdated: _loadCartCount, // Notify cart changes
+                              onCartUpdated: _loadCartCount,
                             );
                           },
                         ),
