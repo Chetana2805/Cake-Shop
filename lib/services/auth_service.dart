@@ -15,6 +15,8 @@ class AuthService {
       await FirebaseFirestore.instance.collection('users').doc(cred.user!.uid).set({
         'uid': cred.user!.uid,
         'email': email.trim(),
+        'name': '', 
+        'createdAt': FieldValue.serverTimestamp(),
       });
       return cred.user;
     } on FirebaseAuthException catch (e) {

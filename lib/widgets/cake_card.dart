@@ -150,7 +150,7 @@ class _CakeCardState extends State<CakeCard> with SingleTickerProviderStateMixin
                                   textColor: Colors.white,       // white text
                                   fontSize: 14.0,
                                 );
-
+                                widget.onCartUpdated?.call();
                                 } catch (e) {
                                   Fluttertoast.showToast(msg: 'Error adding to cart: $e');
                                 } finally {
