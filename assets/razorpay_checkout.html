@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Razorpay Checkout</title>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  </head>
+  <body>
+    <script>
+      function openRazorpay(amountInPaise, name, description, email, contact) {
+        var options = {
+          "key": "rzp_test_1DP5mmOlF5G5ag", // Replace with your Razorpay Test Key
+          "amount": amountInPaise, // in paise
+          "currency": "INR",
+          "name": name,
+          "description": description,
+          "handler": function (response){
+            window.flutter_inappwebview.callHandler('paymentSuccess', response.razorpay_payment_id);
+          },
+          "prefill": {
+            "name": name,
+            "email": email,
+            "contact": contact
+          },
+          "theme": { "color": "#F37254" }
+        };
+        var rzp = new Razorpay(options);
+        rzp.open();
+      }
+    </script>
+  </body>
+</html>
