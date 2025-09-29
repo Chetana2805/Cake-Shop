@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../models/cake.dart';
 import '../services/firestore_service.dart';
+import '../screens/cake_details_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
@@ -23,7 +24,6 @@ class _CakeCardState extends State<CakeCard> with SingleTickerProviderStateMixin
   @override
   void initState() {
     super.initState();
-    print('CakeCard init: cakeId=${widget.cake.id}, imageUrl=${widget.cake.imageUrl}'); // Debug
     _controller = AnimationController(
       duration: const Duration(milliseconds: 200),
       vsync: this,
@@ -45,6 +45,16 @@ class _CakeCardState extends State<CakeCard> with SingleTickerProviderStateMixin
       onTapDown: (_) => _controller.forward(),
       onTapUp: (_) => _controller.reverse(),
       onTapCancel: () => _controller.reverse(),
+
+       onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CakeDetailsScreen(cake: widget.cake),
+        ),
+      );
+    },
+    
       child: ScaleTransition(
         scale: _scaleAnimation,
         child: Card(
@@ -59,107 +69,112 @@ class _CakeCardState extends State<CakeCard> with SingleTickerProviderStateMixin
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
                 child: widget.cake.imageUrl.isNotEmpty
                     ? FadeInImage(
-                        placeholder: const AssetImage('assets/images/placeholder.png'),
+                        placeholder: const AssetImage('assets/images/placeholder-2.png'),
                         image: AssetImage(widget.cake.imageUrl),
-                        height: 150,
+                        height: 120, // reduced for responsiveness
                         width: double.infinity,
                         fit: BoxFit.cover,
-                        imageErrorBuilder: (context, error, stackTrace) {
-                          print('Image load error for ${widget.cake.imageUrl}: $error\nStackTrace: $stackTrace'); // Debug
-                          return const Icon(Icons.error, size: 50, color: Colors.red);
-                        },
                       )
-                    : const Icon(Icons.cake, size: 50, color: Colors.grey),
+                    : const SizedBox(
+                        height: 120,
+                        child: Center(child: Icon(Icons.cake, size: 50, color: Colors.grey)),
+                      ),
               ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.cake.name.isNotEmpty ? widget.cake.name : 'Unknown Cake',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      widget.cake.description.isNotEmpty
-                          ? widget.cake.description
-                          : 'No description',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '₹${widget.cake.price.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.pinkAccent,
-                          ),
+
+              // DETAILS
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.cake.name.isNotEmpty ? widget.cake.name : 'Unknown Cake',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
-                        ElevatedButton(
-                          onPressed: _isProcessing
-                              ? null
-                              : () async {
-                                  if (_isProcessing) return;
-                                  setState(() => _isProcessing = true);
-                                  final user = FirebaseAuth.instance.currentUser;
-                                  if (user == null) {
-                                    Fluttertoast.showToast(
-                                        msg: 'Please log in to add to cart');
-                                    await Future.delayed(
-                                        const Duration(milliseconds: 200));
-                                    if (mounted) {
-                                      Navigator.pushNamed(context, '/auth');
-                                    }
-                                    setState(() => _isProcessing = false);
-                                    return;
-                                  }
-                                  try {
-                                    await FirestoreService()
-                                        .addToCart(user.uid, widget.cake.id, 1);
-                                    Fluttertoast.showToast(
-                                        msg: '${widget.cake.name} added to cart');
-                                    widget.onCartUpdated?.call();
-                                    await Future.delayed(
-                                        const Duration(milliseconds: 200));
-                                    if (mounted) {
-                                      Navigator.pushNamed(context, '/cart');
-                                    }
-                                  } catch (e) {
-                                    Fluttertoast.showToast(
-                                        msg: 'Error adding to cart: $e');
-                                  } finally {
-                                    if (mounted) {
-                                      setState(() => _isProcessing = false);
-                                    }
-                                  }
-                                },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.pinkAccent,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Expanded(
+                        child: Text(
+                          widget.cake.description.isNotEmpty
+                              ? widget.cake.description
+                              : 'No description',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      // PRICE + BUTTON
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '₹${widget.cake.price.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.pinkAccent,
                             ),
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
                           ),
-                          child: const Text('Add to Cart'),
-                        ),
-                      ],
-                    ),
-                  ],
+                          Flexible(
+                            child: ElevatedButton(
+                              onPressed: _isProcessing ? null : () async {
+                                if (_isProcessing) return;
+                                setState(() => _isProcessing = true);
+                                final user = FirebaseAuth.instance.currentUser;
+                                if (user == null) {
+                                  Fluttertoast.showToast(msg: 'Please log in to add to cart');
+                                  await Future.delayed(const Duration(milliseconds: 200));
+                                  if (mounted) {
+                                    Navigator.pushNamed(context, '/auth');
+                                  }
+                                  setState(() => _isProcessing = false);
+                                  return;
+                                }
+                                try {
+                                  await FirestoreService().addToCart(user.uid, widget.cake.id, 1);
+                                  Fluttertoast.showToast(
+                                  msg: '${widget.cake.name} added to cart',
+                                  toastLength: Toast.LENGTH_SHORT,
+                                  gravity: ToastGravity.BOTTOM,
+                                  backgroundColor: Colors.black, // black background
+                                  textColor: Colors.white,       // white text
+                                  fontSize: 14.0,
+                                );
+
+                                } catch (e) {
+                                  Fluttertoast.showToast(msg: 'Error adding to cart: $e');
+                                } finally {
+                                  if (mounted) {
+                                    setState(() => _isProcessing = false);
+                                  }
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.pinkAccent,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                minimumSize: const Size(60, 30), // smaller for mobile
+                              ),
+                              child: const Text('Add to Cart', style: TextStyle(fontSize: 12)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],

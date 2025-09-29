@@ -4,8 +4,7 @@ class Cake {
   final String description;
   final double price;
   final String imageUrl;
-  final List<String> ingredients; // <-- new field
-
+  final List<String> ingredients; // 👈 new field
 
   Cake({
     required this.id,
@@ -13,7 +12,7 @@ class Cake {
     required this.description,
     required this.price,
     required this.imageUrl,
-    required this.ingredients, // <-- include in constructor
+    required this.ingredients,
   });
 
 
@@ -24,10 +23,9 @@ class Cake {
       description: data['description'] ?? '',
       price: (data['price'] as num?)?.toDouble() ?? 0.0,
       imageUrl: data['imageUrl'] ?? '',
-      ingredients: List<String>.from(data['ingredients'] ?? []), // <-- parse array
+      ingredients: List<String>.from(data['ingredients'] ?? []), 
     );
   }
-
 
   Map<String, dynamic> toMap() {
     return {
@@ -35,7 +33,7 @@ class Cake {
       'description': description,
       'price': price,
       'imageUrl': imageUrl,
-      'ingredients': ingredients, // <-- store array
+      'ingredients': ingredients,
     };
   }
 }

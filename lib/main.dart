@@ -5,20 +5,18 @@ import 'firebase_options.dart';
 import 'screens/auth_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/cart_screen.dart';
-import 'screens/checkout_screen.dart';
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Load environment variables
   try {
-  await dotenv.load(fileName: '.env');
-  // For project root
-} catch (e) {
-  print('Error loading .env file: $e');
-  runApp(const ErrorApp(message: 'Failed to load configuration'));
-  return;
-}
+    await dotenv.load(fileName: '.env');
+  } catch (e) {
+    print('Error loading .env file: $e');
+    runApp(const ErrorApp(message: 'Failed to load configuration'));
+    return;
+  }
+
   // Initialize Firebase
   try {
     await Firebase.initializeApp(
@@ -45,7 +43,7 @@ class MyApp extends StatelessWidget {
       initialRoute: '/auth',
       routes: {
         '/auth': (context) => const AuthScreen(),
-        '/home': (context) =>  HomeScreen(),
+        '/home': (context) => HomeScreen(),
         '/cart': (context) => const CartScreen(),
       },
     );
