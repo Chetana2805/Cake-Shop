@@ -18,7 +18,12 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Cake> _cakes = [];
   List<Cake> _filteredCakes = [];
   bool _isLoading = false;
-  int _cartItemCount = 0; // Track cart item count
+  int _cartItemCount = 0;
+
+  // New: price range
+  double _minPrice = 0;
+  double _maxPrice = 1000; // adjust as per your cake prices
+  RangeValues _selectedRange = const RangeValues(0, 1000);
 
   @override
   void initState() {
@@ -37,6 +42,11 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           _cakes = cakes;
           _filteredCakes = cakes;
+          // Update max price dynamically
+          if (_cakes.isNotEmpty) {
+            _maxPrice = _cakes.map((c) => c.price).reduce((a, b) => a > b ? a : b);
+            _selectedRange = RangeValues(_minPrice, _maxPrice);
+          }
         });
       }
     } catch (e) {
@@ -72,11 +82,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _filterCakes() {
     final query = _searchController.text.toLowerCase();
+    final min = _selectedRange.start;
+    final max = _selectedRange.end;
+
     if (mounted) {
       setState(() {
         _filteredCakes = _cakes.where((cake) =>
-            cake.name.toLowerCase().contains(query) ||
-            cake.description.toLowerCase().contains(query)).toList();
+            (cake.name.toLowerCase().contains(query) ||
+             cake.description.toLowerCase().contains(query)) &&
+            cake.price >= min &&
+            cake.price <= max
+        ).toList();
       });
     }
   }
@@ -110,6 +126,13 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         actions: [
+          // Wishlist button ❤️
+          IconButton(
+            icon: const Icon(Icons.favorite, color: Colors.white),
+            onPressed: () {
+              Navigator.pushNamed(context, '/wishlist');
+            },
+          ),
           Stack(
             children: [
               IconButton(
@@ -152,6 +175,7 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            // Search bar
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -181,6 +205,37 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(height: 16),
+            
+            // Price range slider
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Price Range: ₹${_selectedRange.start.toInt()} - ₹${_selectedRange.end.toInt()}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                RangeSlider(
+                  values: _selectedRange,
+                  min: _minPrice,
+                  max: _maxPrice,
+                  divisions: (_maxPrice - _minPrice).toInt(),
+                  labels: RangeLabels(
+                    '₹${_selectedRange.start.toInt()}',
+                    '₹${_selectedRange.end.toInt()}',
+                  ),
+                  onChanged: (RangeValues values) {
+                    setState(() {
+                      _selectedRange = values;
+                    });
+                    _filterCakes();
+                  },
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Cake grid
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
@@ -198,7 +253,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           itemBuilder: (context, index) {
                             return CakeCard(
                               cake: _filteredCakes[index],
-                              onCartUpdated: _loadCartCount, // Notify cart changes
+                              onCartUpdated: _loadCartCount,
+                              // New: pass wishlist support & discount badges
+                              showDiscount: true,
+                              enableWishlist: true,
                             );
                           },
                         ),
