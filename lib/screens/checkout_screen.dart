@@ -9,7 +9,7 @@ class CheckoutScreen extends StatelessWidget {
   final double total;
   final List<CartItem> items;
 
-  CheckoutScreen({required this.total, required this.items});
+  const CheckoutScreen({super.key, required this.total, required this.items});
 
   void _placeOrder(BuildContext context) async {
     String userId = FirebaseAuth.instance.currentUser!.uid;

@@ -22,7 +22,3 @@ subprojects {
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
-dependencies {
-    classpath 'com.google.gms:google-services:4.4.2'
-}
-
