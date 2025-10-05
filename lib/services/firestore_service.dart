@@ -42,6 +42,7 @@ class FirestoreService {
     await cartRef.set({'cakeId': cakeId, 'quantity': quantity});
   }
 
+  // Get user's cart items
   Future<List<CartItem>> getCart(String userId) async {
     QuerySnapshot snapshot =
         await _db.collection('users').doc(userId).collection('carts').get();
@@ -50,6 +51,7 @@ class FirestoreService {
         .toList();
   }
 
+  // Remove a specific item from cart
   Future<void> removeFromCart(String userId, String cakeId) async {
     await _db
         .collection('users')
@@ -59,6 +61,7 @@ class FirestoreService {
         .delete();
   }
 
+  // Clear all cart items
   Future<void> clearCart(String userId) async {
     QuerySnapshot snapshot =
         await _db.collection('users').doc(userId).collection('carts').get();
@@ -89,6 +92,8 @@ class FirestoreService {
     await _db.collection('users').doc(userId).collection('orders').add({
       'items': orderItems,
       'total': total,
+      'deliveryAddress': deliveryAddress,
+      'paymentMethod': paymentMethod,
       'timestamp': FieldValue.serverTimestamp(),
     });
   }
