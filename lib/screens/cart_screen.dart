@@ -78,6 +78,7 @@ class _CartScreenState extends State<CartScreen> {
       appBar: AppBar(
         title: const Text('Your Cart'),
         backgroundColor: Colors.pinkAccent,
+        foregroundColor: Colors.white,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -187,6 +188,7 @@ class _CartScreenState extends State<CartScreen> {
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.pinkAccent,
+                foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),

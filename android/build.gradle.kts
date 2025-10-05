@@ -22,7 +22,15 @@ subprojects {
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
-dependencies {
-    classpath 'com.google.gms:google-services:4.4.2'
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle:8.1.1") // example
+        classpath("com.google.gms:google-services:4.4.2") // ✅ Kotlin DSL syntax
+    }
 }
+
 
