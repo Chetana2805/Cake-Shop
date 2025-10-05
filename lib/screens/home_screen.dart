@@ -226,10 +226,14 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   final TextEditingController _searchController = TextEditingController();
+
   List<Cake> _cakes = [];
   List<Cake> _filteredCakes = [];
   bool _isLoading = false;
-  int _cartItemCount = 0; // Track cart item count
+  int _cartItemCount = 0;
+
+  List<String> _allIngredients = [];
+  List<String> _selectedIngredients = [];
 
   @override
   void initState() {
@@ -245,9 +249,16 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final cakes = await _firestoreService.getCakes();
       if (mounted) {
+        // Collect unique ingredients from all cakes
+        final ingredientsSet = <String>{};
+        for (var cake in cakes) {
+          ingredientsSet.addAll(cake.ingredients); // ingredients array from backend
+        }
+
         setState(() {
           _cakes = cakes;
           _filteredCakes = cakes;
+          _allIngredients = ingredientsSet.toList()..sort();
         });
       }
     } catch (e) {
@@ -275,21 +286,73 @@ class _HomeScreenState extends State<HomeScreen> {
         print('Error loading cart count: $e');
       }
     } else {
-      if (mounted) {
-        setState(() => _cartItemCount = 0);
-      }
+      if (mounted) setState(() => _cartItemCount = 0);
     }
   }
 
   void _filterCakes() {
     final query = _searchController.text.toLowerCase();
-    if (mounted) {
-      setState(() {
-        _filteredCakes = _cakes.where((cake) =>
-            cake.name.toLowerCase().contains(query) ||
-            cake.description.toLowerCase().contains(query)).toList();
-      });
-    }
+    setState(() {
+      _filteredCakes = _cakes.where((cake) {
+        final matchesSearch = cake.name.toLowerCase().contains(query) ||
+            cake.description.toLowerCase().contains(query);
+
+        final matchesIngredient = _selectedIngredients.isEmpty
+            ? true
+            : cake.ingredients
+                .any((ing) => _selectedIngredients.contains(ing));
+
+        return matchesSearch && matchesIngredient;
+      }).toList();
+    });
+  }
+
+  void _openIngredientSelector() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Select Ingredients',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                children: _allIngredients.map((ingredient) {
+                  final isSelected = _selectedIngredients.contains(ingredient);
+                  return ChoiceChip(
+                    label: Text(ingredient),
+                    selected: isSelected,
+                    onSelected: (selected) {
+                      setState(() {
+                        if (selected) {
+                          _selectedIngredients.add(ingredient);
+                        } else {
+                          _selectedIngredients.remove(ingredient);
+                        }
+                        _filterCakes();
+                      });
+                    },
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context); // close modal
+                },
+                child: const Text('Done'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _logout() async {
@@ -371,11 +434,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
             ],
           ),
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
-            onPressed: _logout,
-            tooltip: 'Logout',
-          ),
           const SizedBox(width: 16),
         ],
       ),
@@ -383,35 +441,49 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(30),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.3),
-                    spreadRadius: 2,
-                    blurRadius: 5,
-                    offset: const Offset(0, 3),
+            // Row with search bar + ingredients button
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.3),
+                          spreadRadius: 2,
+                          blurRadius: 5,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Search for cakes...',
+                        prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide.none,
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding:
+                            const EdgeInsets.symmetric(vertical: 15),
+                      ),
+                    ),
                   ),
-                ],
-              ),
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Search for cakes...',
-                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    borderSide: BorderSide.none,
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 15),
                 ),
-              ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: _openIngredientSelector,
+                  child: const Text('Ingredients'),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
+            // Cake grid
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
@@ -429,7 +501,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           itemBuilder: (context, index) {
                             return CakeCard(
                               cake: _filteredCakes[index],
-                              onCartUpdated: _loadCartCount, // Notify cart changes
+                              onCartUpdated: _loadCartCount,
                             );
                           },
                         ),

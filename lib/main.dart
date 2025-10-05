@@ -5,10 +5,6 @@ import 'firebase_options.dart';
 import 'screens/auth_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/cart_screen.dart';
-import 'screens/checkout_screen.dart';
-import '../models/cake.dart';
-import '../models/cart_item.dart';
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 

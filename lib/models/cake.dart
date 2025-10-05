@@ -15,6 +15,7 @@ class Cake {
     required this.ingredients,
   });
 
+
   factory Cake.fromMap(Map<String, dynamic> data, String id) {
     return Cake(
       id: id,
