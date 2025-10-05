@@ -6,7 +6,7 @@ import '../models/cart_item.dart';
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // Fetch all cakes
+// ------------------- Cakes -------------------
   Future<List<Cake>> getCakes() async {
     QuerySnapshot snapshot = await _db.collection('cakes').get();
     return snapshot.docs.map((doc) {
@@ -15,19 +15,31 @@ class FirestoreService {
     }).toList();
   }
 
-  // Add a cake to user's cart
+  Future<void> addCake(Cake cake) async {
+    await _db.collection('cakes').doc(cake.id).set({
+      'name': cake.name,
+      'description': cake.description,
+      'price': cake.price,
+      'imageUrl': cake.imageUrl,
+      'ingredients': cake.ingredients, 
+    });
+  }
+
+  Future<void> updateCake(Cake cake) async {
+    await _db.collection('cakes').doc(cake.id).update({
+      'name': cake.name,
+      'description': cake.description,
+      'price': cake.price,
+      'imageUrl': cake.imageUrl,
+      'ingredients': cake.ingredients, 
+    });
+  }
+
+  // ------------------- Cart -------------------
   Future<void> addToCart(String userId, String cakeId, int quantity) async {
     DocumentReference cartRef =
         _db.collection('users').doc(userId).collection('carts').doc(cakeId);
-
-    // If cake already exists in cart, update quantity
-    DocumentSnapshot doc = await cartRef.get();
-    if (doc.exists) {
-      int currentQuantity = doc['quantity'] ?? 0;
-      await cartRef.update({'quantity': currentQuantity + quantity});
-    } else {
-      await cartRef.set({'cakeId': cakeId, 'quantity': quantity});
-    }
+    await cartRef.set({'cakeId': cakeId, 'quantity': quantity});
   }
 
   // Get user's cart items
@@ -58,16 +70,25 @@ class FirestoreService {
     }
   }
 
-  // Place order with delivery address and payment method only
-  Future<void> placeOrder(
-    String userId,
-    List<CartItem> items,
-    double total, {
-    required String deliveryAddress,
-    required String paymentMethod,
-  }) async {
-    List<Map<String, dynamic>> orderItems = items.map((item) => item.toMap()).toList();
+  Future<void> updateCartQuantity(
+      String userId, String cakeId, int quantity) async {
+    final cartRef = _db
+        .collection('users')
+        .doc(userId)
+        .collection('carts')
+        .doc(cakeId);
 
+    await cartRef.update({
+      'quantity': quantity,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  // ------------------- Orders -------------------
+  Future<void> placeOrder(
+      String userId, List<CartItem> items, double total) async {
+    List<Map<String, dynamic>> orderItems =
+        items.map((item) => item.toMap()).toList();
     await _db.collection('users').doc(userId).collection('orders').add({
       'items': orderItems,
       'total': total,
